@@ -151,7 +151,7 @@ bool SaveManager::activateCustomSaves(const QString& customPath, QString* errorM
 bool SaveManager::restoreDefaultSaves(QString* errorMessage)
 {
     if (!isSwapped()) {
-        return true; // nothing to do
+        return true;
     }
 
     QString originalPath, backupPath;

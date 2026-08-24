@@ -3,10 +3,6 @@
 #include <QObject>
 #include <QString>
 
-// Handles swapping the game's saves folder for a custom one, per mod list.
-// The default saves folder is moved to a backup location, and a symlink
-// pointing at the custom folder takes its place. restoreDefaultSaves()
-// undoes this.
 class SaveManager : public QObject
 {
     Q_OBJECT
