@@ -1,0 +1,14 @@
+[
+  {
+    "label": "Debug",
+    "adapter": "GDB",
+    "request": "launch",
+    "build": {
+      "command": "just",
+      "args": ["build"],
+      "cwd": "$ZED_WORKTREE_ROOT"
+    },
+    "program": "$ZED_WORKTREE_ROOT/build/StarModManager",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  }
+]
