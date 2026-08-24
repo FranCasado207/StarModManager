@@ -14,4 +14,3 @@ run: build
 # limpa o build
 clean:
     rm -rf build
-    rm -rf ~/.config/Yakureito/StarModManager

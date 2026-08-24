@@ -137,5 +137,6 @@ CMakeLists.txt.user*
 .cache
 build
 
+/mods
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,cmake,qt,qtcreator

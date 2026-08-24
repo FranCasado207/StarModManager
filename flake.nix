@@ -18,6 +18,7 @@
             just
             ninja
             gdb
+            libarchive
             qt6.qtbase
             qt6.qtdeclarative
             qt6.qttools

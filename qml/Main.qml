@@ -20,6 +20,8 @@ ApplicationWindow {
             Layout.fillHeight: true
 
             onHomeClicked: contentLoader.source = "pages/HomePage.qml"
+            onModsClicked: contentLoader.source = "pages/ModsPage.qml"
+            onModListsClicked: contentLoader.source = "pages/ModListsPage.qml"
             onSettingsClicked: contentLoader.source = "pages/SettingsPage.qml"
         }
 
