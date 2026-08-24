@@ -6,6 +6,10 @@
 #include "core/mods/modlistmodel.h"
 #include "core/mods/modinstaller.h"
 #include "core/mods/modlistmanager.h"
+#include "core/game/gamelauncher.h"
+#include "core/game/savemanager.h"
+
+
 
 
 int main(int argc, char *argv[])
@@ -19,6 +23,10 @@ int main(int argc, char *argv[])
     ModInstaller modInstaller;
     ModListModel modListModel;
     ModListManager modListManager;
+    GameLauncher gameLauncher;
+    SaveManager saveManager;
+
+    saveManager.recoverFromCrashIfNeeded();
     modListModel.setModsPath(config.modsPath());
 
     QQmlApplicationEngine engine;
@@ -27,11 +35,23 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("modInstaller", &modInstaller);
     engine.rootContext()->setContextProperty("modListModel", &modListModel);
     engine.rootContext()->setContextProperty("modListManager", &modListManager);
+    engine.rootContext()->setContextProperty("gameLauncher", &gameLauncher);
+    engine.rootContext()->setContextProperty("saveManager", &saveManager);
 
     engine.loadFromModule("com.starmodmanager.app", "Main");
 
     QObject::connect(&config, &ConfigManager::modsPathChanged, [&]() {
         modListModel.setModsPath(config.modsPath());
+    });
+
+    QObject::connect(&gameLauncher, &GameLauncher::gameClosed, [&]() {
+        QString errorMessage;
+        bool ok = saveManager.restoreDefaultSaves(&errorMessage);
+        if (!ok) {
+            qWarning() << "Failed to restore default saves:" << errorMessage;
+        } else {
+            qDebug() << "Default saves restored successfully.";
+        }
     });
 
 

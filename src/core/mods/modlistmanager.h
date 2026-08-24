@@ -2,6 +2,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
+#include <QUrl>
 #include "modlist.h"
 
 class ModListManager : public QAbstractListModel
@@ -11,7 +12,8 @@ class ModListManager : public QAbstractListModel
 public:
     enum Roles {
         NameRole = Qt::UserRole + 1,
-        ModCountRole
+        ModCountRole,
+        ThumbnailUrlRole
     };
 
     explicit ModListManager(QObject* parent = nullptr);
@@ -27,12 +29,19 @@ public:
     Q_INVOKABLE QStringList modsInList(const QString& name) const;
     Q_INVOKABLE bool setModsInList(const QString& name, const QStringList& mods);
 
+    Q_INVOKABLE bool setThumbnail(const QString& name, const QUrl& sourceUrl);
+    Q_INVOKABLE QString thumbnailUrl(const QString& name) const;
+
+    Q_INVOKABLE QString savesPathOf(const QString& name) const;
+    Q_INVOKABLE bool setSavesPath(const QString& name, const QString& path);
+
     Q_INVOKABLE bool deploy(const QString& name, const QString& modsPath, const QString& gameModsPath);
 
 private:
     void load();
     void save();
     int indexOfList(const QString& name) const;
+    QString thumbnailsDir() const;
 
     QList<ModList> m_lists;
     QString m_filePath;

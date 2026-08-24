@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 
 Item {
     id: root
@@ -15,6 +16,7 @@ Item {
         root.selectedMods = current.slice()
         root.hasUnsavedChanges = false
         renameField.text = name
+        savesPathField.text = modListManager.savesPathOf(name)
         statusLabel.text = ""
     }
 
@@ -36,6 +38,7 @@ Item {
         anchors.margins: 24
         spacing: 24
 
+        // --- Left: list of mod lists ---
         ColumnLayout {
             Layout.preferredWidth: 220
             Layout.fillHeight: true
@@ -106,6 +109,7 @@ Item {
             }
         }
 
+        // --- Right: editor for the selected list ---
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -131,6 +135,79 @@ Item {
                             } else {
                                 statusLabel.text = "Could not rename (name empty or already exists)."
                             }
+                        }
+                    }
+                }
+            }
+
+            // --- Thumbnail ---
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                Rectangle {
+                    width: 64
+                    height: 64
+                    radius: 6
+                    color: "#242424"
+                    border.color: "#3a3a3a"
+                    clip: true
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        fillMode: Image.PreserveAspectCrop
+                        source: modListManager.thumbnailUrl(root.selectedListName)
+                        visible: source.toString().length > 0
+                    }
+
+                    Label {
+                        anchors.centerIn: parent
+                        text: "No image"
+                        color: "#666666"
+                        font.pixelSize: 10
+                        visible: modListManager.thumbnailUrl(root.selectedListName).length === 0
+                    }
+                }
+
+                Button {
+                    text: "Set thumbnail..."
+                    onClicked: thumbnailDialog.open()
+                }
+            }
+
+            // --- Custom saves folder ---
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+
+                Label {
+                    text: "Custom saves folder (optional)"
+                    color: "#cccccc"
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    TextField {
+                        id: savesPathField
+                        Layout.fillWidth: true
+                        placeholderText: "Leave empty to use the game's default saves"
+                        onEditingFinished: modListManager.setSavesPath(root.selectedListName, text)
+                    }
+
+                    Button {
+                        text: "Browse..."
+                        onClicked: savesPathDialog.open()
+                    }
+
+                    Button {
+                        text: "Clear"
+                        enabled: savesPathField.text.length > 0
+                        onClicked: {
+                            savesPathField.text = ""
+                            modListManager.setSavesPath(root.selectedListName, "")
                         }
                     }
                 }
@@ -193,6 +270,25 @@ Item {
             visible: root.selectedListName.length === 0
             text: "Create or select a mod list to get started."
             color: "#999999"
+        }
+    }
+
+    FileDialog {
+        id: thumbnailDialog
+        title: "Choose a thumbnail image"
+        nameFilters: ["Images (*.png *.jpg *.jpeg *.webp)"]
+        onAccepted: {
+            modListManager.setThumbnail(root.selectedListName, selectedFile)
+        }
+    }
+
+    FolderDialog {
+        id: savesPathDialog
+        title: "Select a custom saves folder for this mod list"
+        onAccepted: {
+            var path = selectedFolder.toString().replace("file://", "")
+            savesPathField.text = path
+            modListManager.setSavesPath(root.selectedListName, path)
         }
     }
 }

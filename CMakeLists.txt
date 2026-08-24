@@ -28,15 +28,20 @@ qt_add_executable(StarModManager
     src/core/mods/archiveextractor.h
     src/core/mods/modinstaller.cpp
     src/core/mods/modinstaller.h
-    src/core/mods/modlist.cpp
-    src/core/mods/modlist.h
     src/core/mods/modlistmodel.cpp
     src/core/mods/modlistmodel.h
+    src/core/mods/modlist.cpp
+    src/core/mods/modlist.h
     src/core/mods/modlistmanager.cpp
     src/core/mods/modlistmanager.h
+    src/core/game/gamelauncher.cpp
+    src/core/game/gamelauncher.h
+    src/core/game/savemanager.cpp
+    src/core/game/savemanager.h
 )
 
 target_include_directories(StarModManager PRIVATE src)
+
 
 qt_add_qml_module(StarModManager
     URI com.starmodmanager.app

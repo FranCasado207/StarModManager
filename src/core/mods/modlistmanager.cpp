@@ -21,6 +21,12 @@ ModListManager::ModListManager(QObject* parent) : QAbstractListModel(parent)
     load();
 }
 
+QString ModListManager::thumbnailsDir() const
+{
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    return configDir + "/thumbnails";
+}
+
 int ModListManager::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) return 0;
@@ -37,6 +43,11 @@ QVariant ModListManager::data(const QModelIndex& index, int role) const
 
     if (role == NameRole) return list.name;
     if (role == ModCountRole) return list.mods.size();
+    if (role == ThumbnailUrlRole) {
+        return list.thumbnailPath.isEmpty()
+            ? QString()
+            : QUrl::fromLocalFile(list.thumbnailPath).toString();
+    }
 
     return QVariant();
 }
@@ -45,7 +56,8 @@ QHash<int, QByteArray> ModListManager::roleNames() const
 {
     return {
         { NameRole, "name" },
-        { ModCountRole, "modCount" }
+        { ModCountRole, "modCount" },
+        { ThumbnailUrlRole, "thumbnailUrl" }
     };
 }
 
@@ -66,6 +78,7 @@ bool ModListManager::createModList(const QString& name)
 
     beginInsertRows(QModelIndex(), m_lists.size(), m_lists.size());
     ModList list;
+    list.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     list.name = trimmed;
     m_lists.append(list);
     endInsertRows();
@@ -78,6 +91,11 @@ bool ModListManager::deleteModList(const QString& name)
 {
     int idx = indexOfList(name);
     if (idx < 0) return false;
+
+    const QString& thumb = m_lists.at(idx).thumbnailPath;
+    if (!thumb.isEmpty()) {
+        QFile::remove(thumb);
+    }
 
     beginRemoveRows(QModelIndex(), idx, idx);
     m_lists.removeAt(idx);
@@ -125,6 +143,50 @@ bool ModListManager::setModsInList(const QString& name, const QStringList& mods)
     return true;
 }
 
+bool ModListManager::setThumbnail(const QString& name, const QUrl& sourceUrl)
+{
+    int idx = indexOfList(name);
+    if (idx < 0) return false;
+
+    QString sourcePath = sourceUrl.toLocalFile();
+    QFileInfo sourceInfo(sourcePath);
+    if (!sourceInfo.exists() || !sourceInfo.isFile()) {
+        return false;
+    }
+
+    QDir dir(thumbnailsDir());
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    QString destination = thumbnailsDir() + "/" + m_lists.at(idx).id + "." + sourceInfo.suffix();
+
+    if (!m_lists.at(idx).thumbnailPath.isEmpty()) {
+        QFile::remove(m_lists.at(idx).thumbnailPath);
+    }
+    QFile::remove(destination);
+
+    if (!QFile::copy(sourcePath, destination)) {
+        return false;
+    }
+
+    m_lists[idx].thumbnailPath = destination;
+    save();
+
+    QModelIndex modelIdx = index(idx);
+    emit dataChanged(modelIdx, modelIdx, { ThumbnailUrlRole });
+    return true;
+}
+
+QString ModListManager::thumbnailUrl(const QString& name) const
+{
+    int idx = indexOfList(name);
+    if (idx < 0 || m_lists.at(idx).thumbnailPath.isEmpty()) {
+        return QString();
+    }
+    return QUrl::fromLocalFile(m_lists.at(idx).thumbnailPath).toString();
+}
+
 bool ModListManager::deploy(const QString& name, const QString& modsPath, const QString& gameModsPath)
 {
     int idx = indexOfList(name);
@@ -152,6 +214,7 @@ bool ModListManager::deploy(const QString& name, const QString& modsPath, const 
         QString destination = gameModsPath + "/" + modName;
 
         if (!QFileInfo::exists(source)) {
+            qWarning() << "Mod source folder missing, skipping:" << source;
             allOk = false;
             continue;
         }
@@ -178,6 +241,7 @@ void ModListManager::load()
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(raw, &parseError);
     if (parseError.error != QJsonParseError::NoError || !doc.isArray()) {
+        qWarning() << "Invalid modlists.json:" << parseError.errorString();
         return;
     }
 
@@ -205,4 +269,21 @@ void ModListManager::save()
     }
     file.write(doc.toJson(QJsonDocument::Indented));
     file.close();
+}
+
+QString ModListManager::savesPathOf(const QString& name) const
+{
+    int idx = indexOfList(name);
+    if (idx < 0) return QString();
+    return m_lists.at(idx).savesPath;
+}
+
+bool ModListManager::setSavesPath(const QString& name, const QString& path)
+{
+    int idx = indexOfList(name);
+    if (idx < 0) return false;
+
+    m_lists[idx].savesPath = path;
+    save();
+    return true;
 }
